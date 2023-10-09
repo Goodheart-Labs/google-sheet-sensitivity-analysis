@@ -3,8 +3,6 @@ const eslintConfig = {
   extends: [
     'eslint:recommended',
     './node_modules/gts/',
-    'plugin:jest/recommended',
-    'plugin:jest/style',
     'plugin:prettier/recommended',
   ],
   parserOptions: {

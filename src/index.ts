@@ -1,12 +1,19 @@
-function writeHelloWorld() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet();
-  const sheet = ss.getSheets()[0];
-  sheet.getRange('A1').setValue('Hello World');
+import { renderConfig } from './configuration';
+
+// @ts-ignore
+function goConfig() {
+  renderConfig();
 }
 
+// @ts-ignore
 function onOpen() {
   const ui = SpreadsheetApp.getUi();
-  ui.createMenu('Hello World Menu')
-    .addItem('Write Hello World', 'writeHelloWorld')
+  ui.createMenu('Sensitivity Analysis')
+    .addItem('Configure', 'goConfig')
     .addToUi();
+}
+
+// @ts-ignore
+function include(filename) {
+  return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }

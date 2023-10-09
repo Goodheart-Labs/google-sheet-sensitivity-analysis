@@ -1,0 +1,141 @@
+<script>
+  function isFormValid() {
+    const $form = document.getElementById('form');
+    const $inputs = $form.querySelectorAll('input');
+    const $submit = $form.querySelector('button[type="submit"]');
+
+    $inputs.forEach(($input) => {
+      $input.onchange();
+    });
+
+    if ($form.querySelectorAll('.invalid').length > 0) {
+      $submit.classList.add(...disabledClasses);
+      return false;
+    }
+
+    $submit.classList.remove(...disabledClasses);
+    return true;
+  }
+
+  window.addEventListener('load', () => {
+    // Config
+
+    const invalidInputClasses = ['border-red-500', 'text-red-500', 'invalid'];
+
+    const disabledClasses = [
+      'opacity-50',
+      'cursor-not-allowed',
+      'pointer-events-none',
+    ];
+
+    // Helpers
+
+    const resetFormInput = ([$input, $label, $error]) => {
+      $input.classList.remove(...invalidInputClasses);
+      $label.classList.remove('text-red-500');
+      $error.classList.add('hidden');
+    };
+
+    const formInput = (id, validate) => {
+      const $input = document.getElementById(id);
+
+      $input.onchange = () => {
+        const { valid, message } = validate($input.value);
+
+        if (valid) {
+          resetFormInput([
+            $input,
+            document.querySelector(`label[for="${id}"]`),
+            document.getElementById(`${id}Error`),
+          ]);
+        } else {
+          errorFormInput([
+            $input,
+            document.querySelector(`label[for="${id}"]`),
+            document.getElementById(`${id}Error`),
+            message,
+          ]);
+        }
+
+        isFormValid();
+      };
+
+      return [
+        $input,
+        document.querySelector(`label[for="${id}"]`),
+        document.getElementById(`${id}Error`),
+      ];
+    };
+
+    const errorFormInput = ([$input, $label, $error, message]) => {
+      $input.classList.add(...invalidInputClasses);
+      $label.classList.add('text-red-500');
+      $error.classList.remove('hidden');
+      $error.textContent = message;
+    };
+
+    // Patterns
+
+    const columnPattern = /^[A-Z]+$/;
+    const cellPattern = /^[A-Z]+\d+$/;
+
+    // Inputs
+
+    const [$scenarioSwitcher, $scenarioSwitcherLabel, $scenarioSwitcherError] =
+      formInput('scenarioSwitcher', (value) => ({
+        valid: columnPattern.test(value),
+        message: 'Must be a column letter',
+      }));
+
+    const [$modelOutput, $modelOutputLabel, $modelOutputError] = formInput(
+      'modelOutput',
+      (value) => {
+        console.log(value);
+        if (!cellPattern.test(value)) {
+          return { valid: false, message: 'Must be a cell reference' };
+        }
+
+        const [column, row] = value.split(/(\d+)/).filter(Boolean);
+
+        console.log(column, row);
+
+        if (column === $scenarioSwitcher.value) {
+          return {
+            valid: false,
+            message:
+              'Model output cannot be in the same column as the scenario switcher',
+          };
+        }
+
+        return { valid: true };
+      },
+    );
+
+    const [
+      $pessimisticColumn,
+      $pessimisticColumnLabel,
+      $pessimisticColumnError,
+    ] = formInput('pessimisticColumn', (value) => ({
+      valid: columnPattern.test(value),
+      message: 'Must be a column letter',
+    }));
+
+    const [$baseColumn, $baseColumnLabel, $baseColumnError] = formInput(
+      'baseColumn',
+      (value) => ({
+        valid: columnPattern.test(value),
+        message: 'Must be a column letter',
+      }),
+    );
+
+    const [$optimisticColumn, $optimisticColumnLabel, $optimisticColumnError] =
+      formInput('optimisticColumn', (value) => ({
+        valid: columnPattern.test(value),
+        message: 'Must be a column letter',
+      }));
+  });
+
+  function validateForm() {
+    return isFormValid();
+  }
+</script>
