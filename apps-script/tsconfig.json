@@ -27,8 +27,7 @@
     "useUnknownInCatchVariables": true,
     "exactOptionalPropertyTypes": true,
     "paths": {
-      "@core/*": ["src/core/*"],
-      "@features/*": ["src/features/*"]
+      "@/*": ["src/*"]
     }
   },
   "include": ["src"]

@@ -1,18 +1,12 @@
-import { EnvironmentService } from '@core/environment';
-import { ByeService } from '@features/bye';
-import { GreetingService } from '@features/greeting';
-import { HelloService } from '@features/hello';
+function writeHelloWorld() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheets()[0];
+  sheet.getRange('A1').setValue('Hello World');
+}
 
-// @ts-ignore
-function main(): void {
-  const byeService = new ByeService();
-  const environmentService = new EnvironmentService();
-  const greetingService = new GreetingService(byeService, environmentService);
-
-  const hiMessage = HelloService.sayHi('CLASP');
-  const byeMessage = ByeService.sayBye('CLASP');
-  const greeting = greetingService.greet('CLASP');
-  const secretValue = greetingService.useSecretValue();
-
-  console.log({ hiMessage, byeMessage, greeting, secretValue });
+function onOpen() {
+  const ui = SpreadsheetApp.getUi();
+  ui.createMenu('Hello World Menu')
+    .addItem('Write Hello World', 'writeHelloWorld')
+    .addToUi();
 }

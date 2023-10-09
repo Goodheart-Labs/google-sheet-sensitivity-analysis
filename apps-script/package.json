@@ -30,7 +30,7 @@
     "test:cov": "npm run test -- --coverage",
     "test:file": "npm run test -- --bail --findRelatedTests --passWithNoTests",
     "test:watch": "npm run test -- --watch",
-    "check:all": "npm run lint:check-all && npm run format:check-all && npm run types:check-all && npm run test:cov",
+    "check:all": "npm run lint:check-all && npm run format:check-all && npm run types:check-all",
     "types:check-all": "tsc"
   },
   "devDependencies": {
