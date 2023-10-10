@@ -1,6 +1,6 @@
 /* eslint-disable node/no-unpublished-import */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -79,6 +79,38 @@ const App = () => {
     resolver: yupResolver(schema),
   });
 
+  // Get config values on load
+
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    google.script.run
+      .withSuccessHandler(
+        (config: {
+          scenarioSwitcher: string;
+          modelOutput: string;
+          pessimisticColumn: string;
+          baseColumn: string;
+          optimisticColumn: string;
+        }) => {
+          setValue('scenarioSwitcher', config.scenarioSwitcher);
+          setValue('modelOutput', config.modelOutput);
+          setValue('pessimisticColumn', config.pessimisticColumn);
+          setValue('baseColumn', config.baseColumn);
+          setValue('optimisticColumn', config.optimisticColumn);
+          setLoading(false);
+        },
+      )
+      .withFailureHandler((err: any) => {
+        // TODO: Show error message
+        console.error(err);
+        setLoading(false);
+      })
+      .getConfigValues();
+  }, []);
+
+  // Handle C/D/E column updates
+
   const pessimisticColumn = watch('pessimisticColumn');
   const baseColumn = watch('baseColumn');
   const optimisticColumn = watch('optimisticColumn');
@@ -96,7 +128,9 @@ const App = () => {
     }
   }, [pessimisticColumn, baseColumn, optimisticColumn, setValue]);
 
-  const onSubmit = (data: any) => {
+  // Callbacks
+
+  const onSubmit = (config: any) => {
     google.script.run
       .withSuccessHandler(() => {
         google.script.host.close();
@@ -105,8 +139,10 @@ const App = () => {
         // TODO: Show error message
         console.error(err);
       })
-      .processJSONData({ data });
+      .setConfigValues({ config });
   };
+
+  // Render
 
   return (
     <form id="config" onSubmit={handleSubmit(onSubmit)}>
@@ -121,7 +157,8 @@ const App = () => {
           </label>
           <input
             type="text"
-            className="mt-1 py-1 px-2 w-full border rounded-md text-sm"
+            className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
+            disabled={loading}
             {...register('scenarioSwitcher')}
           />
           <span className="text-red-500">
@@ -138,7 +175,8 @@ const App = () => {
           </label>
           <input
             type="text"
-            className="mt-1 py-1 px-2 w-full border rounded-md text-sm"
+            className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
+            disabled={loading}
             {...register('modelOutput')}
           />
           <span className="text-red-500">{errors.modelOutput?.message}</span>
@@ -157,7 +195,8 @@ const App = () => {
           </label>
           <input
             type="text"
-            className="mt-1 py-1 px-2 w-full border rounded-md text-sm"
+            className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
+            disabled={loading}
             {...register('pessimisticColumn')}
           />
           <span className="text-red-500">
@@ -174,7 +213,8 @@ const App = () => {
           </label>
           <input
             type="text"
-            className="mt-1 py-1 px-2 w-full border rounded-md text-sm"
+            className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
+            disabled={loading}
             {...register('baseColumn')}
           />
           <span className="text-red-500">{errors.baseColumn?.message}</span>
@@ -189,7 +229,8 @@ const App = () => {
           </label>
           <input
             type="text"
-            className="mt-1 py-1 px-2 w-full border rounded-md text-sm"
+            className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
+            disabled={loading}
             {...register('optimisticColumn')}
           />
           <span className="text-red-500">
@@ -201,10 +242,9 @@ const App = () => {
       <button
         type="submit"
         className={clsx(
-          'mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
-          !isValid && 'opacity-50 cursor-not-allowed pointer-events-none',
+          'mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded disabled:opacity-50 disabled:cursor-not-allowed disabled:pointer-events-none',
         )}
-        disabled={!isValid}
+        disabled={!isValid || loading}
       >
         Save
       </button>

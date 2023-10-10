@@ -36,9 +36,29 @@ function include(filename) {
 }
 
 // @ts-ignore
-function processJSONData(payload) {
-  // Process the JSON object payload
-  // Insert logic here
+function getConfigValues() {
+  const properties = PropertiesService.getDocumentProperties();
+  const config = properties.getProperties();
+
+  return config;
+}
+
+// @ts-ignore
+function setConfigValues({
+  config,
+}: {
+  config: {
+    scenarioSwitcher: string;
+    modelOutput: string;
+    pessimisticColumn: string;
+    baseColumn: string;
+    optimisticColumn: string;
+  };
+}) {
+  // TODO: server-side validation
+
+  const properties = PropertiesService.getDocumentProperties();
+  properties.setProperties(config);
 
   return { success: true };
 }
