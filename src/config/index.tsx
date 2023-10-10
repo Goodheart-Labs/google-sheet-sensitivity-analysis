@@ -1,11 +1,105 @@
 /* eslint-disable node/no-unpublished-import */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import clsx from 'clsx';
+import * as yup from 'yup';
+
+const schema = yup
+  .object({
+    scenarioSwitcher: yup
+      .string()
+      .required()
+      .matches(/^[A-Z]+$/),
+    modelOutput: yup
+      .string()
+      .required()
+      .matches(/^[A-Z]+\d+$/)
+      .test(
+        'is-not-in-same-column',
+        'Model Output must not be in the same column as Scenario Switcher',
+        function (value) {
+          const scenarioSwitcherValue = this.parent.scenarioSwitcher;
+          const modelOutputColumn = value.match(/^[A-Z]+/)?.[0];
+          return modelOutputColumn !== scenarioSwitcherValue;
+        },
+      ),
+    pessimisticColumn: yup
+      .string()
+      .required()
+      .matches(/^[A-Z]+$/)
+      .notOneOf(
+        [
+          yup.ref('baseColumn'),
+          yup.ref('optimisticColumn'),
+          yup.ref('scenarioSwitcher'),
+        ],
+        'Pessimistic Scenario must not be in the same column as Base Scenario, Optimistic Scenario, or Scenario Switcher',
+      ),
+    baseColumn: yup
+      .string()
+      .required()
+      .matches(/^[A-Z]+$/)
+      .notOneOf(
+        [
+          yup.ref('pessimisticColumn'),
+          yup.ref('optimisticColumn'),
+          yup.ref('scenarioSwitcher'),
+        ],
+        'Base Scenario must not be in the same column as Pessimistic Scenario, Optimistic Scenario, or Scenario Switcher',
+      ),
+    optimisticColumn: yup
+      .string()
+      .required()
+      .matches(/^[A-Z]+$/)
+      .notOneOf(
+        [
+          yup.ref('pessimisticColumn'),
+          yup.ref('baseColumn'),
+          yup.ref('scenarioSwitcher'),
+        ],
+        'Optimistic Scenario must not be in the same column as Pessimistic Scenario, Base Scenario, or Scenario Switcher',
+      ),
+  })
+  .required();
 
 const App = () => {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors, isValid },
+  } = useForm({
+    mode: 'onBlur',
+    resolver: yupResolver(schema),
+  });
+
+  const pessimisticColumn = watch('pessimisticColumn');
+  const baseColumn = watch('baseColumn');
+  const optimisticColumn = watch('optimisticColumn');
+
+  useEffect(() => {
+    if (pessimisticColumn && !baseColumn && !optimisticColumn) {
+      setValue(
+        'baseColumn',
+        String.fromCharCode(pessimisticColumn.charCodeAt(0) + 1),
+      );
+      setValue(
+        'optimisticColumn',
+        String.fromCharCode(pessimisticColumn.charCodeAt(0) + 2),
+      );
+    }
+  }, [pessimisticColumn, baseColumn, optimisticColumn, setValue]);
+
+  const onSubmit = (data: any) => console.log(data);
+
+  console.log(isValid);
+
   return (
-    <form id="config">
+    <form id="config" onSubmit={handleSubmit(onSubmit)}>
       <fieldset className="mb-4 p-4 border rounded">
         <legend className="text-sm font-medium text-gray-600">Scenarios</legend>
         <div className="mb-4">
@@ -16,16 +110,13 @@ const App = () => {
             Scenario Switcher (Column)
           </label>
           <input
-            id="scenarioSwitcher"
             type="text"
             className="mt-1 py-1 px-2 w-full border rounded-md text-sm"
-            required
-            pattern="^[A-Z]+$"
+            {...register('scenarioSwitcher')}
           />
-          <span
-            id="scenarioSwitcherError"
-            className="text-red-500 hidden"
-          ></span>
+          <span className="text-red-500">
+            {errors.scenarioSwitcher?.message}
+          </span>
         </div>
 
         <div className="mb-4">
@@ -36,13 +127,11 @@ const App = () => {
             Model Output (Cell)
           </label>
           <input
-            id="modelOutput"
             type="text"
             className="mt-1 py-1 px-2 w-full border rounded-md text-sm"
-            required
-            pattern="^[A-Z]+\d+$"
+            {...register('modelOutput')}
           />
-          <span id="modelOutputError" className="text-red-500 hidden"></span>
+          <span className="text-red-500">{errors.modelOutput?.message}</span>
         </div>
       </fieldset>
 
@@ -57,16 +146,13 @@ const App = () => {
             Pessimistic Scenario (Column)
           </label>
           <input
-            id="pessimisticColumn"
             type="text"
             className="mt-1 py-1 px-2 w-full border rounded-md text-sm"
-            required
-            pattern="^[A-Z]+$"
+            {...register('pessimisticColumn')}
           />
-          <span
-            id="pessimisticColumnError"
-            className="text-red-500 hidden"
-          ></span>
+          <span className="text-red-500">
+            {errors.pessimisticColumn?.message}
+          </span>
         </div>
 
         <div className="mb-4">
@@ -77,13 +163,11 @@ const App = () => {
             Base Scenario (Column)
           </label>
           <input
-            id="baseColumn"
             type="text"
             className="mt-1 py-1 px-2 w-full border rounded-md text-sm"
-            required
-            pattern="^[A-Z]+$"
+            {...register('baseColumn')}
           />
-          <span id="baseColumnError" className="text-red-500 hidden"></span>
+          <span className="text-red-500">{errors.baseColumn?.message}</span>
         </div>
 
         <div className="mb-4">
@@ -94,24 +178,23 @@ const App = () => {
             Optimistic Scenario (Column)
           </label>
           <input
-            id="optimisticColumn"
             type="text"
             className="mt-1 py-1 px-2 w-full border rounded-md text-sm"
-            required
-            pattern="^[A-Z]+$"
+            {...register('optimisticColumn')}
           />
-          <span
-            id="optimisticColumnError"
-            className="text-red-500 hidden"
-          ></span>
+          <span className="text-red-500">
+            {errors.optimisticColumn?.message}
+          </span>
         </div>
       </fieldset>
 
       <button
-        id="submit"
         type="submit"
-        className="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded opacity-50 cursor-not-allowed pointer-events-none"
-        disabled
+        className={clsx(
+          'mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded',
+          !isValid && 'opacity-50 cursor-not-allowed pointer-events-none',
+        )}
+        disabled={!isValid}
       >
         Save
       </button>
