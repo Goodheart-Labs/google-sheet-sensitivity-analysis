@@ -98,8 +98,11 @@ const App = () => {
 
   const onSubmit = (data: any) => {
     google.script.run
-      .withSuccessHandler(console.log)
+      .withSuccessHandler(() => {
+        google.script.host.close();
+      })
       .withFailureHandler((err: any) => {
+        // TODO: Show error message
         console.error(err);
       })
       .processJSONData({ data });

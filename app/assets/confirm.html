@@ -1,0 +1,85 @@
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sensitivity Analysis</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms"></script>
+  </head>
+  <body>
+    <div class="p-4">
+      <div class="mb-4">
+        <label for="confirm">
+          <input
+            type="checkbox"
+            id="confirm"
+            name="confirm"
+            value="confirm"
+            class="mr-2"
+            checked
+          />
+          <span>Run in new sheet</span>
+        </label>
+      </div>
+
+      <p>
+        This runs a sensitivity analysis. It does not validate your model.
+        <strong
+          >Please check that changes to the dropdown boxes are reflected in the
+          model.</strong
+        >
+      </p>
+
+      <div class="mt-6">
+        <button
+          class="mt-4 bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+        >
+          Run
+        </button>
+      </div>
+    </div>
+
+    <script>
+      window.addEventListener('load', () => {
+        const $checkbox = document.getElementById('confirm');
+        const $button = document.querySelector('button');
+
+        const buttonLoading = () => {
+          $button.classList.add(
+            'opacity-50',
+            'cursor-not-allowed',
+            'pointer-events-none',
+          );
+          $button.disabled = true;
+          $button.innerText = 'Loading...';
+        };
+
+        const buttonNotLoading = () => {
+          $button.classList.remove(
+            'opacity-50',
+            'cursor-not-allowed',
+            'pointer-events-none',
+          );
+          $button.disabled = false;
+          $button.innerText = 'Run';
+        };
+
+        $button.addEventListener('click', () => {
+          buttonLoading();
+
+          google.script.run
+            .withSuccessHandler(() => {
+              google.script.host.close();
+              buttonNotLoading();
+            })
+            .withFailureHandler((err) => {
+              console.error(err);
+              buttonNotLoading();
+            })
+            .runSensitivityAnalysis({
+              runInNewSheet: $checkbox.checked,
+            });
+        });
+      });
+    </script>
+  </body>
+</html>
