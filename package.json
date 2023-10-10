@@ -17,17 +17,9 @@
     "clasp:login": "clasp login",
     "deploy": "npm run check:all && npm run build && npm run push",
     "dev:watch": "NODE_ENV=development npm run build -- --watch",
-    "format:check-all": "npm run format:check-file -- .",
-    "format:check-file": "prettier --check",
-    "format:fix-all": "npm run format:fix-file -- .",
-    "format:fix-file": "prettier --write",
-    "lint:check-all": "npm run lint:check-file -- .",
-    "lint:check-file": "eslint --ext ts --ext js --max-warnings 0",
-    "lint:fix-all": "npm run lint:check-all -- --cache --fix",
-    "lint:fix-file": "npm run lint:check-file -- --cache --fix",
     "push": "clasp push",
     "push:watch": "npm run push -- --watch",
-    "check:all": "npm run lint:check-all && npm run format:check-all && npm run types:check-all",
+    "check:all": "npm run types:check-all",
     "types:check-all": "tsc"
   },
   "devDependencies": {

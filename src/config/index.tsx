@@ -7,6 +7,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import clsx from 'clsx';
 import * as yup from 'yup';
 
+declare const google: any;
+
 const schema = yup
   .object({
     scenarioSwitcher: yup
@@ -94,9 +96,14 @@ const App = () => {
     }
   }, [pessimisticColumn, baseColumn, optimisticColumn, setValue]);
 
-  const onSubmit = (data: any) => console.log(data);
-
-  console.log(isValid);
+  const onSubmit = (data: any) => {
+    google.script.run
+      .withSuccessHandler(console.log)
+      .withFailureHandler((err: any) => {
+        console.error(err);
+      })
+      .processJSONData({ data });
+  };
 
   return (
     <form id="config" onSubmit={handleSubmit(onSubmit)}>

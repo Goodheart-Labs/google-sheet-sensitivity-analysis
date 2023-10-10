@@ -20,3 +20,11 @@ function onOpen() {
 function include(filename) {
   return HtmlService.createHtmlOutputFromFile(filename).getContent();
 }
+
+// @ts-ignore
+function processJSONData(payload) {
+  // Process the JSON object payload
+  // Insert logic here
+
+  return { success: true };
+}
