@@ -7,6 +7,20 @@
   </head>
   <body>
     <div class="p-4">
+      <div
+        id="error"
+        class="hidden bg-red-100 mb-8 border border-red-400 text-red-700 px-4 py-3 rounded relative"
+        role="alert"
+      >
+        <strong class="font-bold">Error!</strong>
+        <p id="errorMessage">
+          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Error nobis
+          repellendus nostrum aliquam obcaecati corrupti sed dignissimos iste
+          laborum laudantium minima hic iure voluptatum perferendis quo beatae
+          sit, mollitia aperiam.
+        </p>
+      </div>
+
       <div class="mb-4">
         <label for="confirm">
           <input
@@ -42,6 +56,8 @@
       window.addEventListener('load', () => {
         const $checkbox = document.getElementById('confirm');
         const $button = document.querySelector('button');
+        const $error = document.getElementById('error');
+        const $errorMessage = document.getElementById('errorMessage');
 
         const buttonLoading = () => {
           $button.classList.add(
@@ -63,6 +79,16 @@
           $button.innerText = 'Run';
         };
 
+        const error = (message) => {
+          $errorMessage.innerText = message;
+
+          if (message) {
+            $error.classList.remove('hidden');
+          } else {
+            $error.classList.add('hidden');
+          }
+        };
+
         $button.addEventListener('click', () => {
           buttonLoading();
 
@@ -72,7 +98,7 @@
               buttonNotLoading();
             })
             .withFailureHandler((err) => {
-              console.error(err);
+              error(err);
               buttonNotLoading();
             })
             .runSensitivityAnalysis({
