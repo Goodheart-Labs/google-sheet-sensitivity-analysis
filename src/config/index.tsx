@@ -11,11 +11,11 @@ declare const google: any;
 
 const schema = yup
   .object({
-    scenarioSwitcher: yup
+    scenarioSwitcherColumnIndex: yup
       .string()
       .required()
       .matches(/^[A-Z]+$/),
-    modelOutput: yup
+    modelOutputCellIndex: yup
       .string()
       .required()
       .matches(/^[A-Z]+\d+$/)
@@ -23,44 +23,47 @@ const schema = yup
         'is-not-in-same-column',
         'Model Output must not be in the same column as Scenario Switcher',
         function (value) {
-          const scenarioSwitcherValue = this.parent.scenarioSwitcher;
-          const modelOutputColumn = value.match(/^[A-Z]+/)?.[0];
-          return modelOutputColumn !== scenarioSwitcherValue;
+          const scenarioSwitcherColumnIndexValue =
+            this.parent.scenarioSwitcherColumnIndex;
+          const modelOutputCellIndexColumn = value.match(/^[A-Z]+/)?.[0];
+          return (
+            modelOutputCellIndexColumn !== scenarioSwitcherColumnIndexValue
+          );
         },
       ),
-    pessimisticColumn: yup
+    pessimisticColumnColumnIndex: yup
       .string()
       .required()
       .matches(/^[A-Z]+$/)
       .notOneOf(
         [
-          yup.ref('baseColumn'),
-          yup.ref('optimisticColumn'),
-          yup.ref('scenarioSwitcher'),
+          yup.ref('baseColumnColumnIndex'),
+          yup.ref('optimisticColumnColumnIndex'),
+          yup.ref('scenarioSwitcherColumnIndex'),
         ],
         'Pessimistic Scenario must not be in the same column as Base Scenario, Optimistic Scenario, or Scenario Switcher',
       ),
-    baseColumn: yup
+    baseColumnColumnIndex: yup
       .string()
       .required()
       .matches(/^[A-Z]+$/)
       .notOneOf(
         [
-          yup.ref('pessimisticColumn'),
-          yup.ref('optimisticColumn'),
-          yup.ref('scenarioSwitcher'),
+          yup.ref('pessimisticColumnColumnIndex'),
+          yup.ref('optimisticColumnColumnIndex'),
+          yup.ref('scenarioSwitcherColumnIndex'),
         ],
         'Base Scenario must not be in the same column as Pessimistic Scenario, Optimistic Scenario, or Scenario Switcher',
       ),
-    optimisticColumn: yup
+    optimisticColumnColumnIndex: yup
       .string()
       .required()
       .matches(/^[A-Z]+$/)
       .notOneOf(
         [
-          yup.ref('pessimisticColumn'),
-          yup.ref('baseColumn'),
-          yup.ref('scenarioSwitcher'),
+          yup.ref('pessimisticColumnColumnIndex'),
+          yup.ref('baseColumnColumnIndex'),
+          yup.ref('scenarioSwitcherColumnIndex'),
         ],
         'Optimistic Scenario must not be in the same column as Pessimistic Scenario, Base Scenario, or Scenario Switcher',
       ),
@@ -87,17 +90,26 @@ const App = () => {
     google.script.run
       .withSuccessHandler(
         (config: {
-          scenarioSwitcher: string;
-          modelOutput: string;
-          pessimisticColumn: string;
-          baseColumn: string;
-          optimisticColumn: string;
+          scenarioSwitcherColumnIndex: string;
+          modelOutputCellIndex: string;
+          pessimisticColumnColumnIndex: string;
+          baseColumnColumnIndex: string;
+          optimisticColumnColumnIndex: string;
         }) => {
-          setValue('scenarioSwitcher', config.scenarioSwitcher);
-          setValue('modelOutput', config.modelOutput);
-          setValue('pessimisticColumn', config.pessimisticColumn);
-          setValue('baseColumn', config.baseColumn);
-          setValue('optimisticColumn', config.optimisticColumn);
+          setValue(
+            'scenarioSwitcherColumnIndex',
+            config.scenarioSwitcherColumnIndex,
+          );
+          setValue('modelOutputCellIndex', config.modelOutputCellIndex);
+          setValue(
+            'pessimisticColumnColumnIndex',
+            config.pessimisticColumnColumnIndex,
+          );
+          setValue('baseColumnColumnIndex', config.baseColumnColumnIndex);
+          setValue(
+            'optimisticColumnColumnIndex',
+            config.optimisticColumnColumnIndex,
+          );
           setLoading(false);
         },
       )
@@ -111,22 +123,31 @@ const App = () => {
 
   // Handle C/D/E column updates
 
-  const pessimisticColumn = watch('pessimisticColumn');
-  const baseColumn = watch('baseColumn');
-  const optimisticColumn = watch('optimisticColumn');
+  const pessimisticColumnColumnIndex = watch('pessimisticColumnColumnIndex');
+  const baseColumnColumnIndex = watch('baseColumnColumnIndex');
+  const optimisticColumnColumnIndex = watch('optimisticColumnColumnIndex');
 
   useEffect(() => {
-    if (pessimisticColumn && !baseColumn && !optimisticColumn) {
+    if (
+      pessimisticColumnColumnIndex &&
+      !baseColumnColumnIndex &&
+      !optimisticColumnColumnIndex
+    ) {
       setValue(
-        'baseColumn',
-        String.fromCharCode(pessimisticColumn.charCodeAt(0) + 1),
+        'baseColumnColumnIndex',
+        String.fromCharCode(pessimisticColumnColumnIndex.charCodeAt(0) + 1),
       );
       setValue(
-        'optimisticColumn',
-        String.fromCharCode(pessimisticColumn.charCodeAt(0) + 2),
+        'optimisticColumnColumnIndex',
+        String.fromCharCode(pessimisticColumnColumnIndex.charCodeAt(0) + 2),
       );
     }
-  }, [pessimisticColumn, baseColumn, optimisticColumn, setValue]);
+  }, [
+    pessimisticColumnColumnIndex,
+    baseColumnColumnIndex,
+    optimisticColumnColumnIndex,
+    setValue,
+  ]);
 
   // Callbacks
 
@@ -150,7 +171,7 @@ const App = () => {
         <legend className="text-sm font-medium text-gray-600">Scenarios</legend>
         <div className="mb-4">
           <label
-            htmlFor="scenarioSwitcher"
+            htmlFor="scenarioSwitcherColumnIndex"
             className="block text-sm font-medium text-gray-600"
           >
             Scenario Switcher (Column)
@@ -159,16 +180,16 @@ const App = () => {
             type="text"
             className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
             disabled={loading}
-            {...register('scenarioSwitcher')}
+            {...register('scenarioSwitcherColumnIndex')}
           />
           <span className="text-red-500">
-            {errors.scenarioSwitcher?.message}
+            {errors.scenarioSwitcherColumnIndex?.message}
           </span>
         </div>
 
         <div className="mb-4">
           <label
-            htmlFor="modelOutput"
+            htmlFor="modelOutputCellIndex"
             className="block text-sm font-medium text-gray-600"
           >
             Model Output (Cell)
@@ -177,9 +198,11 @@ const App = () => {
             type="text"
             className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
             disabled={loading}
-            {...register('modelOutput')}
+            {...register('modelOutputCellIndex')}
           />
-          <span className="text-red-500">{errors.modelOutput?.message}</span>
+          <span className="text-red-500">
+            {errors.modelOutputCellIndex?.message}
+          </span>
         </div>
       </fieldset>
 
@@ -188,7 +211,7 @@ const App = () => {
 
         <div className="mb-4">
           <label
-            htmlFor="pessimisticColumn"
+            htmlFor="pessimisticColumnColumnIndex"
             className="block text-sm font-medium text-gray-600"
           >
             Pessimistic Scenario (Column)
@@ -197,16 +220,16 @@ const App = () => {
             type="text"
             className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
             disabled={loading}
-            {...register('pessimisticColumn')}
+            {...register('pessimisticColumnColumnIndex')}
           />
           <span className="text-red-500">
-            {errors.pessimisticColumn?.message}
+            {errors.pessimisticColumnColumnIndex?.message}
           </span>
         </div>
 
         <div className="mb-4">
           <label
-            htmlFor="baseColumn"
+            htmlFor="baseColumnColumnIndex"
             className="block text-sm font-medium text-gray-600"
           >
             Base Scenario (Column)
@@ -215,14 +238,16 @@ const App = () => {
             type="text"
             className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
             disabled={loading}
-            {...register('baseColumn')}
+            {...register('baseColumnColumnIndex')}
           />
-          <span className="text-red-500">{errors.baseColumn?.message}</span>
+          <span className="text-red-500">
+            {errors.baseColumnColumnIndex?.message}
+          </span>
         </div>
 
         <div className="mb-4">
           <label
-            htmlFor="optimisticColumn"
+            htmlFor="optimisticColumnColumnIndex"
             className="block text-sm font-medium text-gray-600"
           >
             Optimistic Scenario (Column)
@@ -231,10 +256,10 @@ const App = () => {
             type="text"
             className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
             disabled={loading}
-            {...register('optimisticColumn')}
+            {...register('optimisticColumnColumnIndex')}
           />
           <span className="text-red-500">
-            {errors.optimisticColumn?.message}
+            {errors.optimisticColumnColumnIndex?.message}
           </span>
         </div>
       </fieldset>

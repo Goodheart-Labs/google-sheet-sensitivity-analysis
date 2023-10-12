@@ -48,11 +48,11 @@ function setConfigValues({
   config,
 }: {
   config: {
-    scenarioSwitcher: string;
-    modelOutput: string;
-    pessimisticColumn: string;
-    baseColumn: string;
-    optimisticColumn: string;
+    scenarioSwitcherColumnIndex: string;
+    modelOutputCellIndex: string;
+    pessimisticColumnColumnIndex: string;
+    baseColumnColumnIndex: string;
+    optimisticColumnColumnIndex: string;
   };
 }) {
   // TODO: server-side validation

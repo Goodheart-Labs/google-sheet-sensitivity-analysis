@@ -93,7 +93,13 @@
           buttonLoading();
 
           google.script.run
-            .withSuccessHandler(() => {
+            .withSuccessHandler(({ success, message }) => {
+              if (!success) {
+                error(message);
+                buttonNotLoading();
+                return;
+              }
+
               google.script.host.close();
               buttonNotLoading();
             })
