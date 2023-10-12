@@ -23,9 +23,12 @@ export const executeSensitivityAnalysis = ({
   const {
     scenarioSwitcherColumnIndex,
     modelOutputCellIndex,
-    baseColumnColumnIndex,
-    pessimisticColumnColumnIndex,
-    optimisticColumnColumnIndex,
+    baseInputColumnColumnIndex,
+    pessimisticInputColumnColumnIndex,
+    optimisticInputColumnColumnIndex,
+    baseOutputColumnColumnIndex,
+    pessimisticOutputColumnColumnIndex,
+    optimisticOutputColumnColumnIndex,
   } = properties.getProperties();
 
   // Prepare the scenario columns - this is a little overengineered right now
@@ -34,9 +37,24 @@ export const executeSensitivityAnalysis = ({
   // TODO: configurable scenarios
 
   const scenarioColumnColumnIndexes = [
-    { name: 'Base', index: baseColumnColumnIndex },
-    { name: 'Pessimistic', index: pessimisticColumnColumnIndex },
-    { name: 'Optimistic', index: optimisticColumnColumnIndex },
+    {
+      name: 'Base',
+      base: true,
+      inputIndex: baseInputColumnColumnIndex,
+      outputIndex: baseOutputColumnColumnIndex,
+    },
+    {
+      name: 'Pessimistic',
+      base: false,
+      inputIndex: pessimisticInputColumnColumnIndex,
+      outputIndex: pessimisticOutputColumnColumnIndex,
+    },
+    {
+      name: 'Optimistic',
+      base: false,
+      inputIndex: optimisticInputColumnColumnIndex,
+      outputIndex: optimisticOutputColumnColumnIndex,
+    },
   ];
 
   console.log(
@@ -62,10 +80,12 @@ export const executeSensitivityAnalysis = ({
     ['model output cell', modelOutputCellIndex],
   ]
     .concat(
-      scenarioColumnColumnIndexes.map(({ name, index }) => [
-        name.toLowerCase() + ' column',
-        index,
-      ]),
+      scenarioColumnColumnIndexes.flatMap(
+        ({ name, inputIndex, outputIndex }) => [
+          [name.toLowerCase() + ' input column', inputIndex],
+          [name.toLowerCase() + ' output column', outputIndex],
+        ],
+      ),
     )
     .filter(([, value]) => !value)
     .map(([name]) => name);
@@ -90,7 +110,11 @@ export const executeSensitivityAnalysis = ({
   if (runInNewSheet) {
     newSheet = sheet
       .copyTo(spreadsheet)
-      .setName(`${sheetName} - Sensitivity Analysis`)
+      .setName(
+        `${sheetName} - Sensitivity Analysis (${
+          new Date().toDateString() + ' ' + new Date().toLocaleTimeString()
+        })`,
+      )
       .activate();
   } else {
     newSheet = sheet;
@@ -194,16 +218,16 @@ export const executeSensitivityAnalysis = ({
     );
   }
 
-  // Scenario Columns
+  // Scenario Input Columns
   // --------------------------------------------------------------------------
 
   for (let i = 0; i < scenarioColumnColumnIndexes.length; i++) {
-    const { name, index } = scenarioColumnColumnIndexes[i];
+    const { name, inputIndex } = scenarioColumnColumnIndexes[i];
     // Are there any numerical values in the column?
 
-    console.log(`Validating the ${name} column`);
+    console.log(`Validating the ${name} input column`);
 
-    const scenarioColumn = newSheet.getRange(`${index}:${index}`);
+    const scenarioColumn = newSheet.getRange(`${inputIndex}:${inputIndex}`);
 
     const scenarioColumnValues = scenarioColumn.getValues();
 
@@ -213,7 +237,7 @@ export const executeSensitivityAnalysis = ({
 
     if (scenarioColumnNumericalValues.length === 0) {
       return error(
-        `The ${name} column (${i}) does not have any numerical values.`,
+        `The ${name} input column (${i}) does not have any numerical values.`,
       );
     }
 
@@ -236,14 +260,14 @@ export const executeSensitivityAnalysis = ({
         return error(
           `Row ${
             row + 1
-          } in the ${name} column (${row}) does not have a numerical value.`,
+          } in the ${name} input column (${row}) does not have a numerical value.`,
         );
       }
 
       console.log(`Row ${row + 1} has a numerical value`);
     }
 
-    console.log(`Validated the ${name} column`);
+    console.log(`Validated the ${name} input column`);
   }
 
   // Okay, we're good to go!
@@ -251,16 +275,83 @@ export const executeSensitivityAnalysis = ({
 
   console.log('All validations passed. Running the sensitivity analysis.');
 
+  // Set all of the scenario switcher cells to the scenario marked base: true
+
+  const resetEverythingToBase = () => {
+    const baseScenario = scenarioColumnColumnIndexes.find(({ base }) => base);
+    if (!baseScenario) {
+      return error('Could not find the base scenario column.');
+    }
+
+    const baseScenarioName = baseScenario.name;
+
+    for (
+      let row = 0;
+      row < trueIfRowHasDropdownFalseOtherwiseArray.length;
+      row++
+    ) {
+      const trueIfRowHasDropdown = trueIfRowHasDropdownFalseOtherwiseArray[row];
+      if (!trueIfRowHasDropdown) continue;
+
+      const scenarioSwitcherCell = scenarioSwitcherColumn.getCell(row + 1, 1);
+      scenarioSwitcherCell.setValue(baseScenarioName);
+    }
+
+    console.log(`Reset everything to the ${baseScenarioName} scenario.`);
+  };
+
   // Loop through each row with a dropdown
 
-  // For each row, loop through each scenario
+  for (
+    let row = 0;
+    row < trueIfRowHasDropdownFalseOtherwiseArray.length;
+    row++
+  ) {
+    const trueIfRowHasDropdown = trueIfRowHasDropdownFalseOtherwiseArray[row];
+    if (!trueIfRowHasDropdown) continue;
 
-  // For each scenario:
-  // - set the scenario switcher to that scenario
-  // - get the value of the model output cell
-  // - set the value of the scenario output cell in this row to the value of the model output cell
+    // Reset everything to the base scenario
 
-  // Keep going until we run out of rows with dropdowns
+    resetEverythingToBase();
+
+    // For each row, loop through each scenario
+
+    for (let i = 0; i < scenarioColumnColumnIndexes.length; i++) {
+      const { name, outputIndex } = scenarioColumnColumnIndexes[i];
+
+      // Set the scenario switcher to that scenario
+
+      const scenarioSwitcherCell = scenarioSwitcherColumn.getCell(row + 1, 1);
+
+      console.log(
+        `Setting the scenario switcher cell (${scenarioSwitcherCell.getA1Notation()}) to ${name}`,
+      );
+
+      scenarioSwitcherCell.setValue(name);
+
+      // Get the value of the model output cell
+
+      const modelOutputCellValue = modelOutputCell.getValue();
+
+      console.log(
+        `The value of the model output cell (${modelOutputCell.getA1Notation()}) is ${modelOutputCellValue}`,
+      );
+
+      // Set the scenario output cell to that value
+
+      const scenarioOutputCell = newSheet.getRange(`${outputIndex}${row + 1}`);
+
+      console.log(
+        `Setting the scenario output cell (${scenarioOutputCell.getA1Notation()}) to ${modelOutputCellValue}`,
+      );
+
+      scenarioOutputCell.setValue(modelOutputCellValue);
+    }
+  }
+
+  // Reset everything to the base scenario one last time
+
+  resetEverythingToBase();
 
   // Done!
   // --------------------------------------------------------------------------

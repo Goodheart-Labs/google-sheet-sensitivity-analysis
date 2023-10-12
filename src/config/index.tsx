@@ -31,38 +31,92 @@ const schema = yup
           );
         },
       ),
-    pessimisticColumnColumnIndex: yup
+    pessimisticInputColumnColumnIndex: yup
       .string()
       .required()
       .matches(/^[A-Z]+$/)
       .notOneOf(
         [
-          yup.ref('baseColumnColumnIndex'),
-          yup.ref('optimisticColumnColumnIndex'),
+          yup.ref('baseInputColumnColumnIndex'),
+          yup.ref('optimisticInputColumnColumnIndex'),
+          yup.ref('baseOutputColumnColumnIndex'),
+          yup.ref('optimisticOutputColumnColumnIndex'),
+          yup.ref('pessimisticOutputColumnColumnIndex'),
           yup.ref('scenarioSwitcherColumnIndex'),
         ],
         'Pessimistic Scenario must not be in the same column as Base Scenario, Optimistic Scenario, or Scenario Switcher',
       ),
-    baseColumnColumnIndex: yup
+    baseInputColumnColumnIndex: yup
       .string()
       .required()
       .matches(/^[A-Z]+$/)
       .notOneOf(
         [
-          yup.ref('pessimisticColumnColumnIndex'),
-          yup.ref('optimisticColumnColumnIndex'),
+          yup.ref('pessimisticInputColumnColumnIndex'),
+          yup.ref('optimisticInputColumnColumnIndex'),
+          yup.ref('pessimisticOutputColumnColumnIndex'),
+          yup.ref('optimisticOutputColumnColumnIndex'),
+          yup.ref('baseOutputColumnColumnIndex'),
           yup.ref('scenarioSwitcherColumnIndex'),
         ],
         'Base Scenario must not be in the same column as Pessimistic Scenario, Optimistic Scenario, or Scenario Switcher',
       ),
-    optimisticColumnColumnIndex: yup
+    optimisticInputColumnColumnIndex: yup
       .string()
       .required()
       .matches(/^[A-Z]+$/)
       .notOneOf(
         [
-          yup.ref('pessimisticColumnColumnIndex'),
-          yup.ref('baseColumnColumnIndex'),
+          yup.ref('pessimisticInputColumnColumnIndex'),
+          yup.ref('baseInputColumnColumnIndex'),
+          yup.ref('pessimisticOutputColumnColumnIndex'),
+          yup.ref('baseOutputColumnColumnIndex'),
+          yup.ref('optimisticOutputColumnColumnIndex'),
+          yup.ref('scenarioSwitcherColumnIndex'),
+        ],
+        'Optimistic Scenario must not be in the same column as Pessimistic Scenario, Base Scenario, or Scenario Switcher',
+      ),
+    pessimisticOutputColumnColumnIndex: yup
+      .string()
+      .required()
+      .matches(/^[A-Z]+$/)
+      .notOneOf(
+        [
+          yup.ref('baseInputColumnColumnIndex'),
+          yup.ref('optimisticInputColumnColumnIndex'),
+          yup.ref('pessimisticInputColumnColumnIndex'),
+          yup.ref('baseOutputColumnColumnIndex'),
+          yup.ref('optimisticOutputColumnColumnIndex'),
+          yup.ref('scenarioSwitcherColumnIndex'),
+        ],
+        'Pessimistic Scenario must not be in the same column as Base Scenario, Optimistic Scenario, or Scenario Switcher',
+      ),
+    baseOutputColumnColumnIndex: yup
+      .string()
+      .required()
+      .matches(/^[A-Z]+$/)
+      .notOneOf(
+        [
+          yup.ref('pessimisticInputColumnColumnIndex'),
+          yup.ref('optimisticInputColumnColumnIndex'),
+          yup.ref('baseInputColumnColumnIndex'),
+          yup.ref('pessimisticOutputColumnColumnIndex'),
+          yup.ref('optimisticOutputColumnColumnIndex'),
+          yup.ref('scenarioSwitcherColumnIndex'),
+        ],
+        'Base Scenario must not be in the same column as Pessimistic Scenario, Optimistic Scenario, or Scenario Switcher',
+      ),
+    optimisticOutputColumnColumnIndex: yup
+      .string()
+      .required()
+      .matches(/^[A-Z]+$/)
+      .notOneOf(
+        [
+          yup.ref('pessimisticInputColumnColumnIndex'),
+          yup.ref('baseInputColumnColumnIndex'),
+          yup.ref('optimisticInputColumnColumnIndex'),
+          yup.ref('pessimisticOutputColumnColumnIndex'),
+          yup.ref('baseOutputColumnColumnIndex'),
           yup.ref('scenarioSwitcherColumnIndex'),
         ],
         'Optimistic Scenario must not be in the same column as Pessimistic Scenario, Base Scenario, or Scenario Switcher',
@@ -92,24 +146,46 @@ const App = () => {
         (config: {
           scenarioSwitcherColumnIndex: string;
           modelOutputCellIndex: string;
-          pessimisticColumnColumnIndex: string;
-          baseColumnColumnIndex: string;
-          optimisticColumnColumnIndex: string;
+          baseInputColumnColumnIndex: string;
+          pessimisticInputColumnColumnIndex: string;
+          optimisticInputColumnColumnIndex: string;
+          baseOutputColumnColumnIndex: string;
+          pessimisticOutputColumnColumnIndex: string;
+          optimisticOutputColumnColumnIndex: string;
         }) => {
           setValue(
             'scenarioSwitcherColumnIndex',
             config.scenarioSwitcherColumnIndex,
           );
+
           setValue('modelOutputCellIndex', config.modelOutputCellIndex);
+
           setValue(
-            'pessimisticColumnColumnIndex',
-            config.pessimisticColumnColumnIndex,
+            'baseInputColumnColumnIndex',
+            config.baseInputColumnColumnIndex,
           );
-          setValue('baseColumnColumnIndex', config.baseColumnColumnIndex);
           setValue(
-            'optimisticColumnColumnIndex',
-            config.optimisticColumnColumnIndex,
+            'pessimisticInputColumnColumnIndex',
+            config.pessimisticInputColumnColumnIndex,
           );
+          setValue(
+            'optimisticInputColumnColumnIndex',
+            config.optimisticInputColumnColumnIndex,
+          );
+
+          setValue(
+            'baseOutputColumnColumnIndex',
+            config.baseOutputColumnColumnIndex,
+          );
+          setValue(
+            'pessimisticOutputColumnColumnIndex',
+            config.pessimisticOutputColumnColumnIndex,
+          );
+          setValue(
+            'optimisticOutputColumnColumnIndex',
+            config.optimisticOutputColumnColumnIndex,
+          );
+
           setLoading(false);
         },
       )
@@ -123,29 +199,74 @@ const App = () => {
 
   // Handle C/D/E column updates
 
-  const pessimisticColumnColumnIndex = watch('pessimisticColumnColumnIndex');
-  const baseColumnColumnIndex = watch('baseColumnColumnIndex');
-  const optimisticColumnColumnIndex = watch('optimisticColumnColumnIndex');
+  const pessimisticInputColumnColumnIndex = watch(
+    'pessimisticInputColumnColumnIndex',
+  );
+  const baseInputColumnColumnIndex = watch('baseInputColumnColumnIndex');
+  const optimisticInputColumnColumnIndex = watch(
+    'optimisticInputColumnColumnIndex',
+  );
+  const pessimisticOutputColumnColumnIndex = watch(
+    'pessimisticOutputColumnColumnIndex',
+  );
+  const baseOutputColumnColumnIndex = watch('baseOutputColumnColumnIndex');
+  const optimisticOutputColumnColumnIndex = watch(
+    'optimisticOutputColumnColumnIndex',
+  );
+
+  // Inputs
 
   useEffect(() => {
     if (
-      pessimisticColumnColumnIndex &&
-      !baseColumnColumnIndex &&
-      !optimisticColumnColumnIndex
+      pessimisticInputColumnColumnIndex &&
+      !baseInputColumnColumnIndex &&
+      !optimisticInputColumnColumnIndex
     ) {
       setValue(
-        'baseColumnColumnIndex',
-        String.fromCharCode(pessimisticColumnColumnIndex.charCodeAt(0) + 1),
+        'baseInputColumnColumnIndex',
+        String.fromCharCode(
+          pessimisticInputColumnColumnIndex.charCodeAt(0) + 1,
+        ),
       );
       setValue(
-        'optimisticColumnColumnIndex',
-        String.fromCharCode(pessimisticColumnColumnIndex.charCodeAt(0) + 2),
+        'optimisticInputColumnColumnIndex',
+        String.fromCharCode(
+          pessimisticInputColumnColumnIndex.charCodeAt(0) + 2,
+        ),
       );
     }
   }, [
-    pessimisticColumnColumnIndex,
-    baseColumnColumnIndex,
-    optimisticColumnColumnIndex,
+    pessimisticInputColumnColumnIndex,
+    baseInputColumnColumnIndex,
+    optimisticInputColumnColumnIndex,
+    setValue,
+  ]);
+
+  // Outputs
+
+  useEffect(() => {
+    if (
+      pessimisticOutputColumnColumnIndex &&
+      !baseOutputColumnColumnIndex &&
+      !optimisticOutputColumnColumnIndex
+    ) {
+      setValue(
+        'baseOutputColumnColumnIndex',
+        String.fromCharCode(
+          pessimisticOutputColumnColumnIndex.charCodeAt(0) + 1,
+        ),
+      );
+      setValue(
+        'optimisticOutputColumnColumnIndex',
+        String.fromCharCode(
+          pessimisticOutputColumnColumnIndex.charCodeAt(0) + 2,
+        ),
+      );
+    }
+  }, [
+    pessimisticOutputColumnColumnIndex,
+    baseOutputColumnColumnIndex,
+    optimisticOutputColumnColumnIndex,
     setValue,
   ]);
 
@@ -211,7 +332,7 @@ const App = () => {
 
         <div className="mb-4">
           <label
-            htmlFor="pessimisticColumnColumnIndex"
+            htmlFor="pessimisticInputColumnColumnIndex"
             className="block text-sm font-medium text-gray-600"
           >
             Pessimistic Scenario (Column)
@@ -220,16 +341,16 @@ const App = () => {
             type="text"
             className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
             disabled={loading}
-            {...register('pessimisticColumnColumnIndex')}
+            {...register('pessimisticInputColumnColumnIndex')}
           />
           <span className="text-red-500">
-            {errors.pessimisticColumnColumnIndex?.message}
+            {errors.pessimisticInputColumnColumnIndex?.message}
           </span>
         </div>
 
         <div className="mb-4">
           <label
-            htmlFor="baseColumnColumnIndex"
+            htmlFor="baseInputColumnColumnIndex"
             className="block text-sm font-medium text-gray-600"
           >
             Base Scenario (Column)
@@ -238,16 +359,16 @@ const App = () => {
             type="text"
             className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
             disabled={loading}
-            {...register('baseColumnColumnIndex')}
+            {...register('baseInputColumnColumnIndex')}
           />
           <span className="text-red-500">
-            {errors.baseColumnColumnIndex?.message}
+            {errors.baseInputColumnColumnIndex?.message}
           </span>
         </div>
 
         <div className="mb-4">
           <label
-            htmlFor="optimisticColumnColumnIndex"
+            htmlFor="optimisticInputColumnColumnIndex"
             className="block text-sm font-medium text-gray-600"
           >
             Optimistic Scenario (Column)
@@ -256,10 +377,68 @@ const App = () => {
             type="text"
             className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
             disabled={loading}
-            {...register('optimisticColumnColumnIndex')}
+            {...register('optimisticInputColumnColumnIndex')}
           />
           <span className="text-red-500">
-            {errors.optimisticColumnColumnIndex?.message}
+            {errors.optimisticInputColumnColumnIndex?.message}
+          </span>
+        </div>
+      </fieldset>
+
+      <fieldset className="mb-4 p-4 border rounded">
+        <legend className="text-sm font-medium text-gray-600">Outputs</legend>
+
+        <div className="mb-4">
+          <label
+            htmlFor="pessimisticOutputColumnColumnIndex"
+            className="block text-sm font-medium text-gray-600"
+          >
+            Pessimistic Scenario (Column)
+          </label>
+          <input
+            type="text"
+            className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
+            disabled={loading}
+            {...register('pessimisticOutputColumnColumnIndex')}
+          />
+          <span className="text-red-500">
+            {errors.pessimisticOutputColumnColumnIndex?.message}
+          </span>
+        </div>
+
+        <div className="mb-4">
+          <label
+            htmlFor="baseOutputColumnColumnIndex"
+            className="block text-sm font-medium text-gray-600"
+          >
+            Base Scenario (Column)
+          </label>
+          <input
+            type="text"
+            className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
+            disabled={loading}
+            {...register('baseOutputColumnColumnIndex')}
+          />
+          <span className="text-red-500">
+            {errors.baseOutputColumnColumnIndex?.message}
+          </span>
+        </div>
+
+        <div className="mb-4">
+          <label
+            htmlFor="optimisticOutputColumnColumnIndex"
+            className="block text-sm font-medium text-gray-600"
+          >
+            Optimistic Scenario (Column)
+          </label>
+          <input
+            type="text"
+            className="mt-1 py-1 px-2 w-full border rounded-md text-sm disabled:bg-gray-50"
+            disabled={loading}
+            {...register('optimisticOutputColumnColumnIndex')}
+          />
+          <span className="text-red-500">
+            {errors.optimisticOutputColumnColumnIndex?.message}
           </span>
         </div>
       </fieldset>
